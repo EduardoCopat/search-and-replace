@@ -19,7 +19,19 @@ def replace_file_content(filepath):
     filedata = f.read()
     f.close()
 
-    new_file_data = old_p_regex.sub(new_pattern, filedata)
+    if filepath.endswith('.xml'):
+      new_file_data = old_p_regex.sub(new_pattern.upper(), filedata)
+    elif filepath.endswith('.abap'):
+      escaped_old_pattern = re.escape(old_pattern)
+      old_class_regex = re.compile('(?<=CLASS )'+escaped_old_pattern, re.IGNORECASE)
+      type_ref_to_regex = re.compile('(?<=TYPE REF TO )'+escaped_old_pattern, re.IGNORECASE)
+      static_call_regex = re.compile(escaped_old_pattern+'(?=(.*?)\=\>)', re.IGNORECASE)
+
+      new_file_data = filedata
+
+      new_file_data = re.sub(old_class_regex, new_pattern, new_file_data)
+      new_file_data = re.sub(type_ref_to_regex, new_pattern, new_file_data)
+      new_file_data = re.sub(static_call_regex, new_pattern, new_file_data)
 
     f = open(filepath, 'w', encoding='UTF8')
     f.write(new_file_data)
@@ -46,4 +58,3 @@ for dirpath, dirnames, files in os.walk(topdir, False):
         continue
       process_file(name, dirpath)
   process_dir(dirpath)
-    
