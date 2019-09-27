@@ -1,3 +1,6 @@
+Check the original repository for complete description.
+This is a copy which only changes references to interface and classes.
+
 ## PLEASE BACKUP BEFORE APPLYING THIS SCRIPT TO A DIRECTORY
 
 # search-and-replace
