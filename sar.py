@@ -27,7 +27,11 @@ def replace_file_content(filepath):
       
       # Replace class definitions, using with lookbehind.
       # e.g. (CLASS foo DEFINITION, CLASS foo IMPLEMENTATION)
-      old_class_regex = re.compile('(?<=CLASS )'+escaped_old_pattern, re.IGNORECASE)
+      class_regex = re.compile('(?<=CLASS )'+escaped_old_pattern, re.IGNORECASE)
+      # Replace class definitions, using with lookbehind.
+      # e.g. (INTERFACE foo)
+      interface_regex = re.compile('(?<=INTERFACE )'+escaped_old_pattern, re.IGNORECASE)
+
       # Replace type ref to defitions with lookbehind
       # e.g. DATA bar type ref to foo.
       type_ref_to_regex = re.compile('(?<=TYPE REF TO )'+escaped_old_pattern, re.IGNORECASE)
@@ -45,9 +49,19 @@ def replace_file_content(filepath):
       # Gets what is inside the CATCH expression
       catch_regex = re.compile('(?<=CATCH )(.*)(?=.)', re.IGNORECASE )
 
+      # Interface implememntation
+      # e.g. METHOD foo~bar.
+      method_interface = re.compile('(?<=METHOD )(.*)(?=~)', re.IGNORECASE )
+
+      # INTERFACES: declaration
+      # e.g. INTERFACES: if_a, if_b.
+      interfaces_definition = re.compile('(?<=INTERFACES)(.*?)\.', flags=re.IGNORECASE|re.DOTALL)
+
+
       new_file_data = filedata
 
-      new_file_data = re.sub(old_class_regex, new_pattern, new_file_data)
+      new_file_data = re.sub(class_regex, new_pattern, new_file_data)
+      new_file_data = re.sub(interface_regex, new_pattern, new_file_data)
       new_file_data = re.sub(type_ref_to_regex, new_pattern, new_file_data)
       new_file_data = re.sub(static_call_regex, new_pattern, new_file_data)
       new_file_data = re.sub(raise_exception_regex, new_pattern, new_file_data)
@@ -57,8 +71,17 @@ def replace_file_content(filepath):
       , new_file_data)
 
       new_file_data = re.sub(catch_regex, 
-          lambda match: '%s' % (substitute_exceptions(match.group(1)))
+          lambda match: '%s' % (simple_substitution(match.group(1)))
       , new_file_data)
+
+      new_file_data = re.sub(method_interface, 
+          lambda match: '%s' % (simple_substitution(match.group(1)))
+      , new_file_data)      
+
+      new_file_data = re.sub(interfaces_definition, 
+          lambda match: '%s' % (simple_substitution(match.group(1)))
+      , new_file_data)     
+      
     else:
       return
 
@@ -66,11 +89,11 @@ def replace_file_content(filepath):
     f.write(new_file_data)
     f.close()
 
-def substitute_exceptions(between_catch_match):
-  #Match all exceptions in catch.
+def simple_substitution(phrase):
+  # Substitute a pattern for a new one
   catch_content_regex = re.compile('('+escaped_old_pattern+')+', re.IGNORECASE)
-  between_catch_match = re.sub(catch_content_regex, new_pattern, between_catch_match)
-  return between_catch_match
+  phrase = re.sub(catch_content_regex, new_pattern, phrase)
+  return phrase
 
 def process_file(name, dirpath):
     if old_pattern_for_file_system in name:
